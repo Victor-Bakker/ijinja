@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Oswald:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
+
+:root {
+  --font-display: 'Oswald', 'Trebuchet MS', sans-serif;
+  --font-body: 'Montserrat', 'Segoe UI', sans-serif;
+  --font-ui: 'Inter', 'Segoe UI', sans-serif;
+  --font-cta: 'Poppins', 'Segoe UI', sans-serif;
+  --navy-900: #152744;
+  --navy-700: #27406b;
+  --orange-500: #ef6726;
+  --orange-700: #ba4811;
+  --ink: #12213b;
+  --ink-soft: #3a4d6b;
+  --border: rgba(21, 39, 68, 0.15);
+  --shadow:
+    0 14px 34px rgba(7, 15, 30, 0.18), 0 5px 14px rgba(7, 15, 30, 0.09);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: 1.5;
+  background-color: #e5ecf6;
+  background-image:
+    linear-gradient(rgba(16, 33, 60, 0.62), rgba(16, 33, 60, 0.52)),
+    url('/content/backgrounds/home-background.png');
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
