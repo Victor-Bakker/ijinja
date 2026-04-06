@@ -6,7 +6,7 @@ const WHATSAPP_NUMBER = '27825772758'
 const MANUAL_ORDER_API_PATH = '/api/store/manual-order'
 const USE_WHATSAPP_CHECKOUT = true
 const STORY_VIDEO_SRC = '/content/assets/fire-video.mp4'
-const HERO_PHOTO_SRC = '/content/assets/ijinja-can-on-head.png'
+const HERO_PHOTO_SRC = '/content/assets/ijinja-can-on-head.webp'
 
 const PAYMENT_OPTIONS = [
   'EFT / Bank Transfer',
