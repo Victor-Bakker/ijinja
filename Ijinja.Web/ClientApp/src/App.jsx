@@ -611,8 +611,11 @@ function App() {
         messageLines.join('\n'),
       )}`
 
-      const popupWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
-      if (!popupWindow) {
+      const popupWindow = window.open('', '_blank')
+      if (popupWindow) {
+        popupWindow.opener = null
+        popupWindow.location.href = whatsappUrl
+      } else {
         window.location.href = whatsappUrl
       }
 
