@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const AGE_VERIFIED_KEY = 'ijinja-age-verified'
-const WHATSAPP_NUMBER = '27825772758'
+const WHATSAPP_NUMBER = '27742643837'
 const MANUAL_ORDER_API_PATH = '/api/store/manual-order'
 const USE_WHATSAPP_CHECKOUT = true
 const STORY_VIDEO_SRC = '/content/assets/fire-video.mp4'
@@ -120,7 +120,7 @@ const contactDetails = [
   { label: 'Contact Person', value: 'Eugene van Zyl' },
   {
     label: 'WhatsApp',
-    value: '082 577 2758',
+    value: '+27 74 264 3837',
     href: `https://wa.me/${WHATSAPP_NUMBER}`,
     external: true,
   },
