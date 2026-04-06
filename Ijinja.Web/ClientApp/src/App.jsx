@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const AGE_VERIFIED_KEY = 'ijinja-age-verified'
-const CART_STORAGE_KEY = 'ijinja-merch-cart'
 const WHATSAPP_NUMBER = '27825772758'
+const MANUAL_ORDER_API_PATH = '/api/store/manual-order'
+const USE_WHATSAPP_CHECKOUT = true
+const STORY_VIDEO_SRC = '/content/assets/fire-video.mp4'
+const HERO_PHOTO_SRC = '/content/assets/ijinja-can-on-head.png'
 
 const PAYMENT_OPTIONS = [
   'EFT / Bank Transfer',
   'Card on Delivery',
   'Cash on Delivery',
 ]
+const MERCH_IN_STOCK = false
 
 const moneyFormatter = new Intl.NumberFormat('en-ZA', {
   style: 'currency',
@@ -22,25 +26,34 @@ const products = [
     id: 'ijinja-original',
     name: 'Ijinja Original',
     tag: 'Original',
+    coverClass: 'can-cover-original',
     image: '/content/products/ijinja-original.png',
     description:
       'A balanced ginger profile with clean heat and smooth everyday drinkability.',
+    price: null,
+    options: ['Standard'],
   },
   {
     id: 'ijinja-alcohol-free',
     name: 'Ijinja Alcohol Free',
     tag: 'Alcohol Free',
+    coverClass: 'can-cover-alcohol-free',
     image: '/content/products/ijinja-alcohol-free.png',
     description:
       'All the Ijinja flavor and fire, made for alcohol-free moments.',
+    price: null,
+    options: ['Standard'],
   },
   {
     id: 'ijinja-with-gin',
     name: 'Ijinja with Gin',
     tag: 'With Gin',
+    coverClass: 'can-cover-with-gin',
     image: '/content/products/ijinja-with-gin.png',
     description:
       'A bold, premium blend where spicy ginger meets a crisp gin finish.',
+    price: null,
+    options: ['Standard'],
   },
 ]
 
@@ -49,7 +62,12 @@ const merchProducts = [
     id: 'ijinja-tee',
     name: 'Ijinja Heritage Tee',
     tag: 'Apparel',
-    image: '/content/products/ijinja-original.png',
+    inStock: MERCH_IN_STOCK,
+    image: '/content/products/Ijinja-shirt1-front.png',
+    images: [
+      '/content/products/Ijinja-shirt1-front.png',
+      '/content/products/Ijinja-shirt1-back.png',
+    ],
     description: 'Soft cotton tee with front logo print for everyday wear.',
     price: 299,
     options: ['S', 'M', 'L', 'XL'],
@@ -58,7 +76,12 @@ const merchProducts = [
     id: 'ijinja-cap',
     name: 'Ijinja Classic Cap',
     tag: 'Accessories',
-    image: '/content/products/ijinja-alcohol-free.png',
+    inStock: MERCH_IN_STOCK,
+    image: '/content/products/ijinja-hat1-front.png',
+    images: [
+      '/content/products/ijinja-hat1-front.png',
+      '/content/products/ijinja-hat1-back.png',
+    ],
     description: 'Curved peak cap with adjustable strap and embroidered logo.',
     price: 249,
     options: ['One Size'],
@@ -67,16 +90,20 @@ const merchProducts = [
     id: 'ijinja-cooler',
     name: 'Ijinja Cooler Bag',
     tag: 'Lifestyle',
-    image: '/content/products/ijinja-with-gin.png',
+    inStock: MERCH_IN_STOCK,
+    image: '/content/products/Ijinja-cooler.png',
     description: 'Insulated carry bag built for road trips, markets, and events.',
     price: 399,
     options: ['Standard'],
   },
 ]
 
+const storeProducts = [...products, ...merchProducts]
+
 const menuItems = [
   { label: 'Our Story', href: '#our-story' },
   { label: 'Products', href: '#products' },
+  { label: 'Buy Ijinja', href: '#buy-products' },
   { label: 'Store', href: '#store' },
   { label: 'Contact', href: '#contact' },
 ]
@@ -91,7 +118,7 @@ const contactDetails = [
   {
     label: 'WhatsApp',
     value: '082 577 2758',
-    href: 'https://wa.me/27825772758',
+    href: `https://wa.me/${WHATSAPP_NUMBER}`,
     external: true,
   },
 ]
@@ -110,39 +137,33 @@ const initialCheckoutForm = {
   notes: '',
 }
 
-const getInitialCart = () => {
-  if (typeof window === 'undefined') {
-    return []
-  }
-
-  try {
-    const storedCart = window.localStorage.getItem(CART_STORAGE_KEY)
-    if (!storedCart) {
-      return []
-    }
-
-    const parsedCart = JSON.parse(storedCart)
-    return Array.isArray(parsedCart) ? parsedCart : []
-  } catch {
-    return []
-  }
-}
-
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
   const [selectedMerchOptions, setSelectedMerchOptions] = useState(() =>
-    merchProducts.reduce((accumulator, product) => {
-      accumulator[product.id] = product.options[0]
+    storeProducts.reduce((accumulator, product) => {
+      accumulator[product.id] = product.options?.[0] || 'Standard'
       return accumulator
     }, {}),
   )
-  const [cartItems, setCartItems] = useState(getInitialCart)
+  const [activeMerchImage, setActiveMerchImage] = useState(() =>
+    merchProducts.reduce((accumulator, product) => {
+      accumulator[product.id] = 0
+      return accumulator
+    }, {}),
+  )
+  const [cartItems, setCartItems] = useState([])
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
+  const [checkoutSuccess, setCheckoutSuccess] = useState('')
+  const [checkoutSubmitting, setCheckoutSubmitting] = useState(false)
   const [checkoutForm, setCheckoutForm] = useState(initialCheckoutForm)
+  const [headerCartVisible, setHeaderCartVisible] = useState(false)
+  const [headerCartExiting, setHeaderCartExiting] = useState(false)
+  const menuWrapRef = useRef(null)
+  const headerCartHideTimerRef = useRef(null)
   const storySectionRef = useRef(null)
-  const storyCanRef = useRef(null)
+  const storyVideoRef = useRef(null)
   const [ageVerified, setAgeVerified] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -184,12 +205,37 @@ function App() {
   }, [ageVerified, checkoutOpen])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof document === 'undefined' || !menuOpen) {
       return
     }
 
-    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
-  }, [cartItems])
+    const closeMenuOnOutsidePress = (event) => {
+      const menuWrap = menuWrapRef.current
+      if (
+        !menuWrap ||
+        !(event.target instanceof Node) ||
+        menuWrap.contains(event.target)
+      ) {
+        return
+      }
+
+      setMenuOpen(false)
+    }
+
+    const closeMenuOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', closeMenuOnOutsidePress)
+    document.addEventListener('keydown', closeMenuOnEscape)
+
+    return () => {
+      document.removeEventListener('pointerdown', closeMenuOnOutsidePress)
+      document.removeEventListener('keydown', closeMenuOnEscape)
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -197,52 +243,92 @@ function App() {
     }
 
     const storySection = storySectionRef.current
-    const storyCan = storyCanRef.current
+    const storyVideo = storyVideoRef.current
 
-    if (!storySection || !storyCan) {
+    if (!storySection || !storyVideo) {
       return
     }
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    if (mediaQuery.matches) {
-      storyCan.style.transform = 'rotate(0deg)'
-      return
+    let measureFrameId = null
+    let measureQueued = false
+    let videoDuration = 0
+
+    const setVideoTime = (progress) => {
+      if (!videoDuration) {
+        return
+      }
+
+      const maxTime = Math.max(videoDuration - 0.05, 0)
+      const nextTime = Math.min(maxTime, Math.max(0, progress * maxTime))
+      if (Math.abs(storyVideo.currentTime - nextTime) > 0.01) {
+        storyVideo.currentTime = nextTime
+      }
     }
 
-    let frameId = null
-    let ticking = false
+    const updateVideoTimeForScroll = () => {
+      measureQueued = false
 
-    const updateRotation = () => {
-      ticking = false
+      if (mediaQuery.matches) {
+        setVideoTime(0)
+        return
+      }
 
       const rect = storySection.getBoundingClientRect()
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight
       const scrollRange = rect.height + viewportHeight
       const traveled = viewportHeight - rect.top
       const progress = Math.min(1, Math.max(0, traveled / scrollRange))
-      const rotation = progress * 360
 
-      storyCan.style.transform = `rotate(${rotation.toFixed(2)}deg)`
+      setVideoTime(progress)
     }
 
-    const queueUpdate = () => {
-      if (ticking) {
+    const queueMeasure = () => {
+      if (measureQueued) {
         return
       }
 
-      ticking = true
-      frameId = window.requestAnimationFrame(updateRotation)
+      measureQueued = true
+      measureFrameId = window.requestAnimationFrame(updateVideoTimeForScroll)
     }
 
-    queueUpdate()
-    window.addEventListener('scroll', queueUpdate, { passive: true })
-    window.addEventListener('resize', queueUpdate)
+    const syncVideoDuration = () => {
+      const nextDuration = storyVideo.duration
+      if (!Number.isFinite(nextDuration) || nextDuration <= 0) {
+        return
+      }
+
+      videoDuration = nextDuration
+      queueMeasure()
+    }
+
+    storyVideo.pause()
+    storyVideo.currentTime = 0
+    syncVideoDuration()
+    queueMeasure()
+
+    storyVideo.addEventListener('loadedmetadata', syncVideoDuration)
+    storyVideo.addEventListener('durationchange', syncVideoDuration)
+    window.addEventListener('scroll', queueMeasure, { passive: true })
+    window.addEventListener('resize', queueMeasure)
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', queueMeasure)
+    } else if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(queueMeasure)
+    }
 
     return () => {
-      window.removeEventListener('scroll', queueUpdate)
-      window.removeEventListener('resize', queueUpdate)
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId)
+      storyVideo.removeEventListener('loadedmetadata', syncVideoDuration)
+      storyVideo.removeEventListener('durationchange', syncVideoDuration)
+      window.removeEventListener('scroll', queueMeasure)
+      window.removeEventListener('resize', queueMeasure)
+      if (typeof mediaQuery.removeEventListener === 'function') {
+        mediaQuery.removeEventListener('change', queueMeasure)
+      } else if (typeof mediaQuery.removeListener === 'function') {
+        mediaQuery.removeListener(queueMeasure)
+      }
+      if (measureFrameId !== null) {
+        window.cancelAnimationFrame(measureFrameId)
       }
     }
   }, [])
@@ -264,6 +350,12 @@ function App() {
   }
 
   const formatPrice = (value) => moneyFormatter.format(value)
+  const isProductInStock = (product) => product.inStock !== false
+
+  const getMerchImages = (product) =>
+    Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : [product.image]
 
   const updateSelectedOption = (productId, option) => {
     setSelectedMerchOptions((current) => ({
@@ -272,13 +364,31 @@ function App() {
     }))
   }
 
-  const addToCart = (productId) => {
-    const product = merchProducts.find((entry) => entry.id === productId)
-    if (!product) {
+  const cycleMerchImage = (productId, imageCount, direction = 1) => {
+    if (imageCount <= 1) {
       return
     }
 
-    const selectedOption = selectedMerchOptions[productId] || product.options[0]
+    setActiveMerchImage((current) => {
+      const currentIndex = current[productId] ?? 0
+      const nextIndex = (currentIndex + direction + imageCount) % imageCount
+      return {
+        ...current,
+        [productId]: nextIndex,
+      }
+    })
+  }
+
+  const addToCart = (productId) => {
+    const product = storeProducts.find((entry) => entry.id === productId)
+    if (!product) {
+      return
+    }
+    if (!isProductInStock(product)) {
+      return
+    }
+
+    const selectedOption = selectedMerchOptions[productId] || product.options?.[0] || 'Standard'
 
     setCartItems((current) => {
       const existingItem = current.find(
@@ -328,21 +438,55 @@ function App() {
 
   const cartLineItems = cartItems
     .map((entry) => {
-      const product = merchProducts.find((item) => item.id === entry.productId)
+      const product = storeProducts.find((item) => item.id === entry.productId)
       if (!product) {
         return null
       }
 
+      const hasPrice = typeof product.price === 'number'
+
       return {
         ...entry,
         product,
-        lineTotal: product.price * entry.quantity,
+        lineTotal: hasPrice ? product.price * entry.quantity : null,
       }
     })
     .filter(Boolean)
 
   const cartItemCount = cartLineItems.reduce((sum, entry) => sum + entry.quantity, 0)
-  const cartTotal = cartLineItems.reduce((sum, entry) => sum + entry.lineTotal, 0)
+  const cartTotal = cartLineItems.reduce((sum, entry) => sum + (entry.lineTotal ?? 0), 0)
+  const hasUnpricedItems = cartLineItems.some((entry) => entry.lineTotal === null)
+
+  useEffect(() => {
+    if (cartItemCount > 0) {
+      if (headerCartHideTimerRef.current !== null) {
+        window.clearTimeout(headerCartHideTimerRef.current)
+        headerCartHideTimerRef.current = null
+      }
+
+      setHeaderCartVisible(true)
+      setHeaderCartExiting(false)
+      return
+    }
+
+    if (!headerCartVisible) {
+      return
+    }
+
+    setHeaderCartExiting(true)
+    headerCartHideTimerRef.current = window.setTimeout(() => {
+      setHeaderCartVisible(false)
+      setHeaderCartExiting(false)
+      headerCartHideTimerRef.current = null
+    }, 260)
+
+    return () => {
+      if (headerCartHideTimerRef.current !== null) {
+        window.clearTimeout(headerCartHideTimerRef.current)
+        headerCartHideTimerRef.current = null
+      }
+    }
+  }, [cartItemCount, headerCartVisible])
 
   const updateCheckoutField = (field, value) => {
     setCheckoutForm((current) => ({
@@ -357,15 +501,18 @@ function App() {
     }
 
     setCheckoutError('')
+    setCheckoutSuccess('')
     setCheckoutOpen(true)
   }
 
   const closeCheckout = () => {
     setCheckoutError('')
+    setCheckoutSuccess('')
+    setCheckoutSubmitting(false)
     setCheckoutOpen(false)
   }
 
-  const handleWhatsAppCheckout = (event) => {
+  const handleManualCheckout = async (event) => {
     event.preventDefault()
 
     if (!cartLineItems.length) {
@@ -408,36 +555,121 @@ function App() {
       return
     }
 
-    const lines = [
-      'Hi Ijinja team, I would like to place a merch order:',
-      '',
-      ...cartLineItems.map(
-        (entry, index) =>
-          `${index + 1}. ${entry.product.name} (${entry.option}) x${entry.quantity} - ${formatPrice(entry.lineTotal)}`,
-      ),
-      '',
-      `Order Total: ${formatPrice(cartTotal)}`,
-      '',
-      'Customer details:',
-      `- Name: ${trimmedDetails.fullName}`,
-      `- Email: ${trimmedDetails.email}`,
-      `- Phone: ${trimmedDetails.phone}`,
-      `- Delivery address: ${trimmedDetails.address}`,
-      `- Payment option: ${trimmedDetails.paymentMethod}`,
-    ]
-
-    if (trimmedDetails.notes) {
-      lines.push(`- Notes: ${trimmedDetails.notes}`)
+    const payload = {
+      fullName: trimmedDetails.fullName,
+      email: trimmedDetails.email,
+      phone: trimmedDetails.phone,
+      address: trimmedDetails.address,
+      paymentMethod: trimmedDetails.paymentMethod,
+      notes: trimmedDetails.notes,
+      orderTotal: cartTotal,
+      currencyCode: 'ZAR',
+      items: cartLineItems.map((entry) => ({
+        productId: entry.productId,
+        productName: entry.product.name,
+        option: entry.option,
+        quantity: entry.quantity,
+        unitPrice: entry.product.price ?? 0,
+        lineTotal: entry.lineTotal ?? 0,
+      })),
     }
 
-    lines.push('', 'Please confirm stock, delivery fee, and payment instructions.')
-
-    const message = encodeURIComponent(lines.join('\n'))
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
-
-    setCheckoutOpen(false)
     setCheckoutError('')
+    setCheckoutSuccess('')
+
+    if (USE_WHATSAPP_CHECKOUT) {
+      const orderLines = cartLineItems.map((entry, index) => {
+        const lineTotalText =
+          entry.lineTotal === null ? 'Quoted item' : formatPrice(entry.lineTotal)
+        return `${index + 1}. ${entry.product.name} (${entry.option}) x ${entry.quantity} - ${lineTotalText}`
+      })
+
+      const totalText = hasUnpricedItems
+        ? `${formatPrice(cartTotal)} + quoted items`
+        : formatPrice(cartTotal)
+
+      const messageLines = [
+        'Hello Ijinja team, I would like to place this order:',
+        '',
+        `Name: ${payload.fullName}`,
+        `Email: ${payload.email}`,
+        `Phone: ${payload.phone}`,
+        `Delivery address: ${payload.address}`,
+        `Payment option: ${payload.paymentMethod}`,
+      ]
+
+      if (payload.notes) {
+        messageLines.push(`Notes: ${payload.notes}`)
+      }
+
+      messageLines.push('', 'Order items:', ...orderLines, '', `Order total: ${totalText}`)
+
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+        messageLines.join('\n'),
+      )}`
+
+      const popupWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      if (!popupWindow) {
+        window.location.href = whatsappUrl
+      }
+
+      setCheckoutSuccess('WhatsApp opened with your order message ready to send.')
+      return
+    }
+
+    setCheckoutSubmitting(true)
+
+    try {
+      const response = await fetch(MANUAL_ORDER_API_PATH, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      let responseBody = null
+      try {
+        responseBody = await response.json()
+      } catch {
+        responseBody = null
+      }
+
+      if (!response.ok) {
+        const errorText =
+          responseBody?.error ||
+          responseBody?.detail ||
+          'We could not submit your order right now. Please try again.'
+        setCheckoutError(errorText)
+        return
+      }
+
+      const orderReference = responseBody?.orderReference?.trim()
+      const orderReferenceText = orderReference ? ` Ref: ${orderReference}.` : ''
+
+      if (responseBody?.status === 'submitted_confirmation_failed') {
+        const customerConfirmationError = responseBody?.customerConfirmationError
+        const customerConfirmationText =
+          customerConfirmationError && typeof customerConfirmationError === 'string'
+            ? ` Customer confirmation message failed: ${customerConfirmationError}`
+            : ''
+
+        setCheckoutSuccess(
+          `Order submitted successfully.${orderReferenceText} Our team will contact you to confirm stock, delivery, and payment.${customerConfirmationText}`,
+        )
+      } else {
+        setCheckoutSuccess(
+          `Order submitted and confirmation sent to your phone.${orderReferenceText} Our team will contact you to confirm stock, delivery, and payment.`,
+        )
+      }
+
+      setCheckoutForm(initialCheckoutForm)
+      clearCart()
+    } catch {
+      setCheckoutError('Network error while submitting your order. Please try again.')
+    } finally {
+      setCheckoutSubmitting(false)
+    }
   }
 
   return (
@@ -504,8 +736,9 @@ function App() {
             </div>
 
             <p className="checkout-copy">
-              Fill in your details below. We will open WhatsApp with your order and
-              info pre-filled so you only need to send it.
+              {USE_WHATSAPP_CHECKOUT
+                ? 'Fill in your details below. When you submit, WhatsApp will open with your order message ready to send to the supplier.'
+                : 'Fill in your details below. We will submit your order to the Ijinja team, then confirm stock, delivery, and payment with you manually.'}
             </p>
 
             {checkoutError && (
@@ -514,7 +747,13 @@ function App() {
               </p>
             )}
 
-            <form className="checkout-form" onSubmit={handleWhatsAppCheckout}>
+            {checkoutSuccess && (
+              <p className="checkout-success" role="status">
+                {checkoutSuccess}
+              </p>
+            )}
+
+            <form className="checkout-form" onSubmit={handleManualCheckout}>
               <label>
                 <span>Full Name</span>
                 <input
@@ -589,7 +828,11 @@ function App() {
                 </p>
                 <p>
                   <span>Total</span>
-                  <strong>{formatPrice(cartTotal)}</strong>
+                  <strong>
+                    {hasUnpricedItems
+                      ? `${formatPrice(cartTotal)} + quoted items`
+                      : formatPrice(cartTotal)}
+                  </strong>
                 </p>
               </div>
 
@@ -598,11 +841,20 @@ function App() {
                   type="button"
                   className="checkout-button checkout-button-secondary"
                   onClick={closeCheckout}
+                  disabled={checkoutSubmitting}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="checkout-button checkout-button-primary">
-                  Open WhatsApp
+                <button
+                  type="submit"
+                  className="checkout-button checkout-button-primary"
+                  disabled={checkoutSubmitting}
+                >
+                  {checkoutSubmitting
+                    ? 'Submitting...'
+                    : USE_WHATSAPP_CHECKOUT
+                      ? 'Open WhatsApp'
+                      : 'Submit Order'}
                 </button>
               </div>
             </form>
@@ -624,16 +876,35 @@ function App() {
           </a>
 
           <div className="header-actions">
+            {headerCartVisible && (
+              <a
+                className={`header-cart-link ${headerCartExiting ? 'is-exiting' : ''}`}
+                href="#cart"
+                aria-label={`View cart. ${cartItemCount} item${cartItemCount === 1 ? '' : 's'} in cart.`}
+              >
+                <img
+                  src="/content/assets/shopping-bag-checkmark-icon.webp"
+                  alt=""
+                  className="header-cart-icon"
+                  loading="eager"
+                  decoding="async"
+                />
+                <span key={cartItemCount} className="header-cart-count">
+                  {cartItemCount}
+                </span>
+              </a>
+            )}
+
             <a className="shop-cta" href="#store">
-              Shop Merch
+              Shop now
             </a>
 
-            <div className="menu-wrap">
+            <div className="menu-wrap" ref={menuWrapRef}>
               <button
                 type="button"
                 className={`hamburger ${menuOpen ? 'is-open' : ''}`}
                 onClick={() => setMenuOpen((open) => !open)}
-                aria-label="Open navigation menu"
+                aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={menuOpen}
               >
                 <span></span>
@@ -672,8 +943,8 @@ function App() {
 
             <div className="hero-image-wrap">
               <img
-                src="/content/products/ijinja-original.png"
-                alt="Ijinja Original can"
+                src={HERO_PHOTO_SRC}
+                alt="Ijinja can balanced on a person's head"
                 loading="lazy"
               />
             </div>
@@ -685,12 +956,15 @@ function App() {
             ref={storySectionRef}
           >
             <div className="story-image">
-              <img
-                ref={storyCanRef}
-                src="/content/products/ijinja-with-gin.png"
-                alt="Ijinja with Gin can"
-                loading="lazy"
-              />
+              <video
+                ref={storyVideoRef}
+                muted
+                playsInline
+                preload="metadata"
+                aria-label="Ijinja story fire animation"
+              >
+                <source src={STORY_VIDEO_SRC} type="video/mp4" />
+              </video>
             </div>
 
             <div className="story-copy">
@@ -720,14 +994,23 @@ function App() {
             </div>
 
             <div className="carousel-viewport">
+              <button
+                type="button"
+                onClick={goPrev}
+                className="nav-button nav-button-prev"
+                aria-label="Previous product"
+              >
+                &lt;
+              </button>
+
               <div
                 className="carousel-track"
                 style={{ transform: `translateX(-${activeSlide * 100}%)` }}
               >
-                {products.map((product, index) => (
+                {products.map((product) => (
                   <article className="product-card" key={product.id}>
                     <div className="product-layout">
-                      <div className={`product-cover cover-${index + 1}`}>
+                      <div className={`product-cover ${product.coverClass}`}>
                         <img
                           src={product.image}
                           alt={product.name}
@@ -747,13 +1030,17 @@ function App() {
                   </article>
                 ))}
               </div>
+              <button
+                type="button"
+                onClick={goNext}
+                className="nav-button nav-button-next"
+                aria-label="Next product"
+              >
+                &gt;
+              </button>
             </div>
 
             <div className="carousel-actions">
-              <button type="button" onClick={goPrev} className="nav-button">
-                Prev
-              </button>
-
               <div className="indicators">
                 {products.map((product, index) => (
                   <button
@@ -765,11 +1052,62 @@ function App() {
                   ></button>
                 ))}
               </div>
-
-              <button type="button" onClick={goNext} className="nav-button">
-                Next
-              </button>
             </div>
+          </section>
+
+          <section
+            className="content-section buy-products-section"
+            id="buy-products"
+            aria-label="Buy Ijinja products"
+          >
+            <div className="buy-products-head">
+              <p className="section-kicker">Buy Products</p>
+              <h2 className="section-title">Order Your Ijinja Range</h2>
+              <p>
+                Ready to stock up? Choose a flavor below and add it to your cart.
+              </p>
+            </div>
+
+            <div className="buy-products-grid">
+              {products.map((product) => {
+                const isInStock = isProductInStock(product)
+
+                return (
+                  <article key={product.id} className="buy-product-card">
+                    <div className={`buy-product-image ${product.coverClass}`}>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    </div>
+
+                    <div className="buy-product-content">
+                      <p className="product-tag">{product.tag}</p>
+                      <h3>{product.name}</h3>
+                      <p>{product.description}</p>
+
+                      <button
+                        type="button"
+                        className="buy-product-button"
+                        onClick={() => addToCart(product.id)}
+                        disabled={!isInStock}
+                      >
+                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+
+            <p className="buy-products-note">
+              Need wholesale, event, or stockist orders?{' '}
+              <a href="#contact">Contact us directly</a> and we'll help.
+            </p>
           </section>
 
           <section
@@ -781,28 +1119,62 @@ function App() {
               <p className="section-kicker">Merch Store</p>
               <h2 className="section-title">Gear Up with Ijinja</h2>
               <p>
-                Add items to your cart and checkout directly on WhatsApp. We
-                will confirm stock, delivery, and payment with you personally.
+                {USE_WHATSAPP_CHECKOUT
+                  ? 'Add items to your cart and submit your order. WhatsApp will open with your order message ready to send to our team.'
+                  : 'Add items to your cart and submit your order. Our team will confirm stock, delivery, and payment with you personally.'}
               </p>
             </div>
 
             <div className="merch-layout">
               <div className="merch-grid">
-                {merchProducts.map((product) => (
-                  <article key={product.id} className="merch-card">
+                {merchProducts.map((product) => {
+                  const merchImages = getMerchImages(product)
+                  const imageCount = merchImages.length
+                  const imageIndex =
+                    imageCount > 0 ? (activeMerchImage[product.id] ?? 0) % imageCount : 0
+                  const activeImage = merchImages[imageIndex] || product.image
+                  const isInStock = isProductInStock(product)
+
+                  const merchCardClassName = `merch-card${product.id === 'ijinja-tee' ? ' merch-card-tee' : ''}${product.id === 'ijinja-cap' ? ' merch-card-cap' : ''}`
+
+                  return (
+                  <article
+                    key={product.id}
+                    className={merchCardClassName}
+                  >
                     <div className="merch-image-wrap">
                       <img
-                        src={product.image}
+                        src={activeImage}
                         alt={product.name}
                         loading="lazy"
                         onError={(event) => {
                           event.currentTarget.style.display = 'none'
                         }}
                       />
+
+                      {imageCount > 1 && (
+                        <div className="merch-image-controls">
+                          <button
+                            type="button"
+                            className="merch-image-arrow"
+                            onClick={() => cycleMerchImage(product.id, imageCount, 1)}
+                            aria-label={`Show other side of ${product.name}`}
+                          >
+                            &gt;
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="merch-details">
                       <p className="product-tag">{product.tag}</p>
+                      <p
+                        className={`stock-status ${
+                          isInStock ? 'stock-status-in' : 'stock-status-out'
+                        }`}
+                      >
+                        {isInStock ? 'In Stock' : 'Out of Stock'}
+                      </p>
                       <h3>{product.name}</h3>
                       <p>{product.description}</p>
                       <p className="merch-price">{formatPrice(product.price)}</p>
@@ -814,6 +1186,7 @@ function App() {
                           onChange={(event) =>
                             updateSelectedOption(product.id, event.target.value)
                           }
+                          disabled={!isInStock}
                         >
                           {product.options.map((option) => (
                             <option key={option} value={option}>
@@ -827,15 +1200,17 @@ function App() {
                         type="button"
                         className="merch-add-button"
                         onClick={() => addToCart(product.id)}
+                        disabled={!isInStock}
                       >
-                        Add to Cart
+                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
                       </button>
                     </div>
                   </article>
-                ))}
+                  )
+                })}
               </div>
 
-              <aside className="cart-panel" aria-label="Shopping cart">
+              <aside className="cart-panel" id="cart" aria-label="Shopping cart">
                 <div className="cart-head">
                   <h3>Your Cart</h3>
                   <p>
@@ -845,7 +1220,7 @@ function App() {
 
                 {!cartLineItems.length && (
                   <p className="cart-empty">
-                    Your cart is empty. Add merch items to begin your order.
+                    Your cart is empty. Add products or merch items to begin your order.
                   </p>
                 )}
 
@@ -859,7 +1234,11 @@ function App() {
                         <div className="cart-item-main">
                           <h4>{entry.product.name}</h4>
                           <p>{entry.option}</p>
-                          <strong>{formatPrice(entry.lineTotal)}</strong>
+                          <strong>
+                            {entry.lineTotal === null
+                              ? 'Price on request'
+                              : formatPrice(entry.lineTotal)}
+                          </strong>
                         </div>
 
                         <div className="cart-item-actions">
@@ -911,7 +1290,11 @@ function App() {
                 <div className="cart-footer">
                   <p className="cart-total">
                     <span>Total</span>
-                    <strong>{formatPrice(cartTotal)}</strong>
+                    <strong>
+                      {hasUnpricedItems
+                        ? `${formatPrice(cartTotal)} + quoted items`
+                        : formatPrice(cartTotal)}
+                    </strong>
                   </p>
 
                   <div className="cart-buttons">
@@ -929,7 +1312,7 @@ function App() {
                       onClick={openCheckout}
                       disabled={!cartLineItems.length}
                     >
-                      Checkout on WhatsApp
+                      Checkout
                     </button>
                   </div>
                 </div>

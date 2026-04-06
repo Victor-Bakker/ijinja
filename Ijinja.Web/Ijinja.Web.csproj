@@ -4,6 +4,34 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <SpaRoot>ClientApp\</SpaRoot>
+    <NpmCommand Condition="'$(OS)' == 'Windows_NT'">cmd /c npm</NpmCommand>
+    <NpmCommand Condition="'$(OS)' != 'Windows_NT'">npm</NpmCommand>
   </PropertyGroup>
+
+  <Target Name="PublishFrontendAssets" AfterTargets="ComputeFilesToPublish">
+    <Message
+      Condition="!Exists('$(SpaRoot)node_modules')"
+      Importance="high"
+      Text="ClientApp/node_modules not found. Installing frontend dependencies for publish." />
+
+    <Exec
+      Condition="!Exists('$(SpaRoot)node_modules')"
+      WorkingDirectory="$(SpaRoot)"
+      Command="$(NpmCommand) ci" />
+
+    <Exec
+      WorkingDirectory="$(SpaRoot)"
+      Command="$(NpmCommand) run build" />
+
+    <ItemGroup>
+      <DistFiles Include="$(SpaRoot)dist\**\*" />
+      <ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>%(DistFiles.Identity)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 
 </Project>

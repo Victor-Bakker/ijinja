@@ -1,14 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Oswald:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700;900&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Oswald:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
 
 :root {
   --font-display: 'Oswald', 'Trebuchet MS', sans-serif;
   --font-body: 'Montserrat', 'Segoe UI', sans-serif;
   --font-ui: 'Inter', 'Segoe UI', sans-serif;
   --font-cta: 'Poppins', 'Segoe UI', sans-serif;
+  --font-button-display: 'Bitter', Georgia, serif;
   --navy-900: #152744;
   --navy-700: #27406b;
   --orange-500: #ef6726;
   --orange-700: #ba4811;
+  --button-gold: #f8b75a;
+  --button-gold-bright: #ffdca8;
+  --button-ink-1: #11253f;
+  --button-ink-2: #1f3b61;
   --ink: #12213b;
   --ink-soft: #3a4d6b;
   --border: rgba(21, 39, 68, 0.15);
