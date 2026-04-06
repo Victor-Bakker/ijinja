@@ -26,33 +26,36 @@ const products = [
     id: 'ijinja-original',
     name: 'Ijinja Original',
     tag: 'Original',
+    inStock: true,
     coverClass: 'can-cover-original',
     image: '/content/products/ijinja-original.png',
     description:
       'A balanced ginger profile with clean heat and smooth everyday drinkability.',
-    price: null,
+    price: 34.99,
     options: ['Standard'],
   },
   {
     id: 'ijinja-alcohol-free',
     name: 'Ijinja Alcohol Free',
     tag: 'Alcohol Free',
+    inStock: false,
     coverClass: 'can-cover-alcohol-free',
     image: '/content/products/ijinja-alcohol-free.png',
     description:
       'All the Ijinja flavor and fire, made for alcohol-free moments.',
-    price: null,
+    price: 34.99,
     options: ['Standard'],
   },
   {
     id: 'ijinja-with-gin',
     name: 'Ijinja with Gin',
     tag: 'With Gin',
+    inStock: false,
     coverClass: 'can-cover-with-gin',
     image: '/content/products/ijinja-with-gin.png',
     description:
       'A bold, premium blend where spicy ginger meets a crisp gin finish.',
-    price: null,
+    price: 34.99,
     options: ['Standard'],
   },
 ]
@@ -1089,6 +1092,9 @@ function App() {
                       <p className="product-tag">{product.tag}</p>
                       <h3>{product.name}</h3>
                       <p>{product.description}</p>
+                      <p className="buy-product-price">
+                        {formatPrice(product.price)} Vat included
+                      </p>
 
                       <button
                         type="button"
