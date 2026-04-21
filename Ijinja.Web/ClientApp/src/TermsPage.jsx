@@ -2,32 +2,79 @@ import './terms.css'
 
 const TERMS_SECTIONS = [
   {
-    title: 'Eligibility and Age Restriction',
-    body: 'You must be 18 years or older to purchase alcohol-containing Ij!nja products. By placing an order, you confirm that the information you provide is accurate and that you are legally permitted to receive the products you order.',
+    title: 'Merchant and Customer Support Details',
+    points: [
+      'This website is operated by Ij!nja in South Africa.',
+      'Customer support contact: admin@ijinja.co.za and WhatsApp +27 74 264 3837.',
+      'All order and payment support queries should include your order reference.',
+    ],
   },
   {
-    title: 'Orders and Acceptance',
-    body: 'Placing an order does not guarantee acceptance. We may decline or cancel orders for stock, pricing, or verification reasons. If this happens after payment is received, we will contact you and arrange a refund or alternative.',
+    title: 'Product Information and Order Acceptance',
+    points: [
+      'We provide descriptions of products and related services on our website.',
+      'Placing an order is an offer to purchase. Orders are accepted only after confirmation and successful payment processing where applicable.',
+      'We may decline or cancel orders where products are unavailable, pricing is incorrect, or fraud/risk checks fail.',
+    ],
   },
   {
-    title: 'Pricing and Payments',
-    body: 'All prices are listed in South African Rand (ZAR) and may change without notice. Delivery or special handling fees, where applicable, are shown at checkout. Payment options are displayed before order confirmation.',
+    title: 'Pricing, Currency, and Charges',
+    points: [
+      'All transactions are processed in South African Rand (ZAR).',
+      'Prices shown on the website are in ZAR and include VAT where indicated.',
+      'Delivery fees or additional service charges, where applicable, are shown before order confirmation.',
+      'Card issuer or bank charges outside our control may apply according to your provider terms.',
+    ],
   },
   {
-    title: 'Delivery and Risk',
-    body: 'Delivery timelines are estimates and may vary by location and courier conditions. Risk in the goods passes to you at delivery. Someone eligible to receive the order must be available at the delivery address.',
+    title: 'Payment Methods and PayFast',
+    points: [
+      'Available payment methods are shown at checkout and may include PayFast and manual settlement options.',
+      'For PayFast transactions, you are securely redirected to PayFast to complete payment.',
+      'Payment method logos displayed at checkout indicate currently supported methods.',
+      'A successful PayFast redirect does not replace back-end payment validation and order verification.',
+    ],
   },
   {
-    title: 'Returns and Refunds',
-    body: 'If your order arrives damaged, incorrect, or incomplete, contact us as soon as possible with your order details. We will assess the issue and arrange replacement, correction, or refund where appropriate.',
+    title: 'Security Policy',
+    points: [
+      'Payments are processed over secure encrypted connections.',
+      'Card payment details are captured on PayFast-hosted payment pages and are not stored in full by Ij!nja.',
+      'We maintain reasonable technical and organisational controls to protect personal information and transaction records.',
+    ],
   },
   {
-    title: 'Liability and Product Use',
-    body: 'Consume responsibly. To the fullest extent permitted by law, Ij!nja is not liable for indirect or consequential losses arising from product use, delivery delays, or temporary service interruptions.',
+    title: 'Delivery Policy and Risk',
+    points: [
+      'Delivery mode is courier or arranged delivery depending on destination and order profile.',
+      'Delivery timelines are estimates and may vary due to logistics or operational constraints.',
+      'Risk in goods passes to the customer upon delivery to the provided address.',
+      'A person legally permitted to receive age-restricted goods must be present at delivery where required.',
+    ],
   },
   {
-    title: 'Changes to These Terms',
-    body: 'We may update these Terms and Conditions from time to time. Updates take effect when published on this page, and continued use of our website or services means you accept the latest version.',
+    title: 'Returns, Refunds, and Cancellations',
+    points: [
+      'Report damaged, incorrect, or incomplete orders as soon as possible after delivery.',
+      'Approved refunds are processed to the original payment method where possible, subject to payment network and bank timelines.',
+      'If an order is cancelled after payment authorization or settlement, any refund may be reduced by non-recoverable third-party costs where legally permitted.',
+    ],
+  },
+  {
+    title: 'Country of Domicile and Export Restriction',
+    points: [
+      'Country of domicile: South Africa.',
+      'Orders are fulfilled for South African delivery addresses unless otherwise agreed in writing.',
+      'Export restrictions may apply and international fulfillment is not guaranteed.',
+    ],
+  },
+  {
+    title: 'Acceptance of Terms and Policy Updates',
+    points: [
+      'By completing checkout, you confirm that you accept these Terms and Conditions, including pricing, delivery, and refund terms.',
+      'You must be 18 years or older to purchase alcohol-containing products.',
+      'We may update these terms from time to time. The latest version published on this page applies to new transactions.',
+    ],
   },
 ]
 
@@ -69,7 +116,11 @@ function TermsPage() {
               <h2>
                 {index + 1}. {section.title}
               </h2>
-              <p>{section.body}</p>
+              <ul>
+                {section.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
             </article>
           ))}
         </section>

@@ -121,6 +121,17 @@
   color: var(--ink);
 }
 
+.terms-item ul {
+  margin: 0.55rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.terms-item li {
+  color: var(--ink);
+}
+
 .terms-contact {
   padding: 1rem 1.1rem;
   background:
