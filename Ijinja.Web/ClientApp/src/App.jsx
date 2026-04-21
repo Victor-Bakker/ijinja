@@ -1,20 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import AgeGate from './components/AgeGate/AgeGate'
+import CheckoutModal from './components/CheckoutModal/CheckoutModal'
+import Header from './components/Header/Header'
+import Store from './components/Store/Store'
+import {
+  DRINK_CASE_SIZE,
+  HERO_PHOTO_SRC,
+  MANUAL_ORDER_API_PATH,
+  PAYMENT_OPTIONS,
+  STORY_VIDEO_SRC,
+  USE_WHATSAPP_CHECKOUT,
+  WHATSAPP_NUMBER,
+  contactDetails,
+  drinkProductIds,
+  initialCheckoutForm,
+  menuItems,
+  merchProducts,
+  products,
+  socialLinks,
+  storeProducts,
+} from './data/siteContent'
 
 const AGE_VERIFIED_KEY = 'ijinja-age-verified'
-const WHATSAPP_NUMBER = '27742643837'
-const MANUAL_ORDER_API_PATH = '/api/store/manual-order'
-const USE_WHATSAPP_CHECKOUT = true
-const STORY_VIDEO_SRC = '/content/assets/fire-video.mp4'
-const HERO_PHOTO_SRC = '/content/assets/ijinja-can-on-head.webp'
-const DRINK_CASE_SIZE = 24
-
-const PAYMENT_OPTIONS = [
-  'EFT / Bank Transfer',
-  'Card on Delivery',
-  'Cash on Delivery',
-]
-const MERCH_IN_STOCK = false
 
 const moneyFormatter = new Intl.NumberFormat('en-ZA', {
   style: 'currency',
@@ -22,130 +30,7 @@ const moneyFormatter = new Intl.NumberFormat('en-ZA', {
   minimumFractionDigits: 2,
 })
 
-const products = [
-  {
-    id: 'ijinja-original',
-    name: 'Ijinja Original',
-    tag: 'Original',
-    inStock: true,
-    coverClass: 'can-cover-original',
-    image: '/content/products/ijinja-original.png',
-    description:
-      'A balanced ginger profile with clean heat and smooth everyday drinkability.',
-    price: 34.99,
-    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
-  },
-  {
-    id: 'ijinja-alcohol-free',
-    name: 'Ijinja Alcohol Free',
-    tag: 'Alcohol Free',
-    inStock: false,
-    coverClass: 'can-cover-alcohol-free',
-    image: '/content/products/ijinja-alcohol-free.png',
-    description:
-      'All the Ijinja flavor and fire, made for alcohol-free moments.',
-    price: 34.99,
-    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
-  },
-  {
-    id: 'ijinja-with-gin',
-    name: 'Ijinja with Gin',
-    tag: 'With Gin',
-    inStock: false,
-    coverClass: 'can-cover-with-gin',
-    image: '/content/products/ijinja-with-gin.png',
-    description:
-      'A bold, premium blend where spicy ginger meets a crisp gin finish.',
-    price: 34.99,
-    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
-  },
-]
-
-const drinkProductIds = new Set(products.map((product) => product.id))
-
-const merchProducts = [
-  {
-    id: 'ijinja-tee',
-    name: 'Ijinja Heritage Tee',
-    tag: 'Apparel',
-    inStock: MERCH_IN_STOCK,
-    image: '/content/products/Ijinja-shirt1-front.png',
-    images: [
-      '/content/products/Ijinja-shirt1-front.png',
-      '/content/products/Ijinja-shirt1-back.png',
-    ],
-    description: 'Soft cotton tee with front logo print for everyday wear.',
-    price: 299,
-    options: ['S', 'M', 'L', 'XL'],
-  },
-  {
-    id: 'ijinja-cap',
-    name: 'Ijinja Classic Cap',
-    tag: 'Accessories',
-    inStock: MERCH_IN_STOCK,
-    image: '/content/products/ijinja-hat1-front.png',
-    images: [
-      '/content/products/ijinja-hat1-front.png',
-      '/content/products/ijinja-hat1-back.png',
-    ],
-    description: 'Curved peak cap with adjustable strap and embroidered logo.',
-    price: 249,
-    options: ['One Size'],
-  },
-  {
-    id: 'ijinja-cooler',
-    name: 'Ijinja Cooler Bag',
-    tag: 'Lifestyle',
-    inStock: MERCH_IN_STOCK,
-    image: '/content/products/Ijinja-cooler.png',
-    description: 'Insulated carry bag built for road trips, markets, and events.',
-    price: 399,
-    options: ['Standard'],
-  },
-]
-
-const storeProducts = [...products, ...merchProducts]
-
-const menuItems = [
-  { label: 'Our Story', href: '#our-story' },
-  { label: 'Products', href: '#products' },
-  { label: 'Buy Ijinja', href: '#buy-products' },
-  { label: 'Store', href: '#store' },
-  { label: "T&C's", href: '/terms-and-conditions.html' },
-  { label: 'Contact', href: '#contact' },
-]
-
-const contactDetails = [
-  {
-    label: 'Email',
-    value: 'admin@ijinja.co.za',
-    href: 'mailto:admin@ijinja.co.za',
-  },
-  { label: 'Contact Person', value: 'Eugene van Zyl' },
-  {
-    label: 'WhatsApp',
-    value: '+27 74 264 3837',
-    href: `https://wa.me/${WHATSAPP_NUMBER}`,
-    external: true,
-  },
-]
-
-const socialLinks = [
-  { label: 'Facebook', href: 'https://www.facebook.com/IjinjaSpirit' },
-  { label: 'Instagram', href: 'https://www.instagram.com/ijinja_spirit/' },
-]
-
-const initialCheckoutForm = {
-  fullName: '',
-  email: '',
-  phone: '',
-  address: '',
-  paymentMethod: PAYMENT_OPTIONS[0],
-  notes: '',
-}
-
 function App() {
-  const [menuOpen, setMenuOpen] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
   const [selectedMerchOptions, setSelectedMerchOptions] = useState(() =>
     storeProducts.reduce((accumulator, product) => {
@@ -167,7 +52,6 @@ function App() {
   const [checkoutForm, setCheckoutForm] = useState(initialCheckoutForm)
   const [headerCartVisible, setHeaderCartVisible] = useState(false)
   const [headerCartExiting, setHeaderCartExiting] = useState(false)
-  const menuWrapRef = useRef(null)
   const headerCartHideTimerRef = useRef(null)
   const storySectionRef = useRef(null)
   const storyVideoRef = useRef(null)
@@ -210,39 +94,6 @@ function App() {
       document.body.style.overflow = originalOverflow
     }
   }, [ageVerified, checkoutOpen])
-
-  useEffect(() => {
-    if (typeof document === 'undefined' || !menuOpen) {
-      return
-    }
-
-    const closeMenuOnOutsidePress = (event) => {
-      const menuWrap = menuWrapRef.current
-      if (
-        !menuWrap ||
-        !(event.target instanceof Node) ||
-        menuWrap.contains(event.target)
-      ) {
-        return
-      }
-
-      setMenuOpen(false)
-    }
-
-    const closeMenuOnEscape = (event) => {
-      if (event.key === 'Escape') {
-        setMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('pointerdown', closeMenuOnOutsidePress)
-    document.addEventListener('keydown', closeMenuOnEscape)
-
-    return () => {
-      document.removeEventListener('pointerdown', closeMenuOnOutsidePress)
-      document.removeEventListener('keydown', closeMenuOnEscape)
-    }
-  }, [menuOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -360,11 +211,13 @@ function App() {
   const isProductInStock = (product) => product.inStock !== false
   const getProductById = (productId) =>
     storeProducts.find((entry) => entry.id === productId)
+
   const isDrinkProduct = (productOrId) => {
     const productId =
       typeof productOrId === 'string' ? productOrId : productOrId?.id
     return Boolean(productId && drinkProductIds.has(productId))
   }
+
   const getUnitPrice = (product) => {
     if (!product || typeof product.price !== 'number') {
       return null
@@ -405,11 +258,13 @@ function App() {
     if (!product) {
       return
     }
+
     if (!isProductInStock(product)) {
       return
     }
 
-    const selectedOption = selectedMerchOptions[productId] || product.options?.[0] || 'Standard'
+    const selectedOption =
+      selectedMerchOptions[productId] || product.options?.[0] || 'Standard'
 
     setCartItems((current) => {
       const existingItem = current.find(
@@ -700,260 +555,33 @@ function App() {
   return (
     <>
       {!ageVerified && (
-        <div
-          className="age-gate-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="age-gate-title"
-        >
-          <div className="age-gate-card">
-            <img
-              src="/content/assets/logo-1.png"
-              alt="Ijinja logo"
-              className="age-gate-logo"
-              loading="eager"
-            />
-            <p className="age-gate-kicker">Age Verification</p>
-            <h2 id="age-gate-title">Please verify your age</h2>
-            <p className="age-gate-copy">
-              You must be 18 years or older to access this website.
-            </p>
-
-            <div className="age-gate-actions">
-              <button
-                type="button"
-                className="age-button age-button-primary"
-                onClick={handleVerifyAge}
-              >
-                I am 18 years or older
-              </button>
-
-              <button
-                type="button"
-                className="age-button age-button-secondary"
-                onClick={handleUnderAge}
-              >
-                I am younger than 18
-              </button>
-            </div>
-          </div>
-        </div>
+        <AgeGate onVerifyAge={handleVerifyAge} onUnderAge={handleUnderAge} />
       )}
 
-      {checkoutOpen && (
-        <div
-          className="checkout-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="checkout-title"
-        >
-          <div className="checkout-card">
-            <div className="checkout-head">
-              <h2 id="checkout-title">Checkout Details</h2>
-              <button
-                type="button"
-                className="checkout-close"
-                onClick={closeCheckout}
-                aria-label="Close checkout details"
-              >
-                X
-              </button>
-            </div>
-
-            <p className="checkout-copy">
-              {USE_WHATSAPP_CHECKOUT
-                ? 'Fill in your details below. When you submit, WhatsApp will open with your order message ready to send to the supplier.'
-                : 'Fill in your details below. We will submit your order to the Ijinja team, then confirm stock, delivery, and payment with you manually.'}
-            </p>
-
-            {checkoutError && (
-              <p className="checkout-error" role="alert">
-                {checkoutError}
-              </p>
-            )}
-
-            {checkoutSuccess && (
-              <p className="checkout-success" role="status">
-                {checkoutSuccess}
-              </p>
-            )}
-
-            <form className="checkout-form" onSubmit={handleManualCheckout}>
-              <label>
-                <span>Full Name</span>
-                <input
-                  type="text"
-                  value={checkoutForm.fullName}
-                  onChange={(event) =>
-                    updateCheckoutField('fullName', event.target.value)
-                  }
-                  autoComplete="name"
-                />
-              </label>
-
-              <label>
-                <span>Email</span>
-                <input
-                  type="email"
-                  value={checkoutForm.email}
-                  onChange={(event) => updateCheckoutField('email', event.target.value)}
-                  autoComplete="email"
-                />
-              </label>
-
-              <label>
-                <span>Phone</span>
-                <input
-                  type="tel"
-                  value={checkoutForm.phone}
-                  onChange={(event) => updateCheckoutField('phone', event.target.value)}
-                  autoComplete="tel"
-                />
-              </label>
-
-              <label>
-                <span>Delivery Address</span>
-                <textarea
-                  rows={3}
-                  value={checkoutForm.address}
-                  onChange={(event) => updateCheckoutField('address', event.target.value)}
-                  autoComplete="street-address"
-                ></textarea>
-              </label>
-
-              <label>
-                <span>Payment Option</span>
-                <select
-                  value={checkoutForm.paymentMethod}
-                  onChange={(event) =>
-                    updateCheckoutField('paymentMethod', event.target.value)
-                  }
-                >
-                  {PAYMENT_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                <span>Notes (Optional)</span>
-                <textarea
-                  rows={2}
-                  value={checkoutForm.notes}
-                  onChange={(event) => updateCheckoutField('notes', event.target.value)}
-                ></textarea>
-              </label>
-
-              <div className="checkout-summary">
-                <p>
-                  <span>Items</span>
-                  <strong>{cartItemCount}</strong>
-                </p>
-                <p>
-                  <span>Total</span>
-                  <strong>
-                    {hasUnpricedItems
-                      ? `${formatPrice(cartTotal)} + quoted items`
-                      : formatPrice(cartTotal)}
-                  </strong>
-                </p>
-              </div>
-
-              <div className="checkout-actions">
-                <button
-                  type="button"
-                  className="checkout-button checkout-button-secondary"
-                  onClick={closeCheckout}
-                  disabled={checkoutSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="checkout-button checkout-button-primary"
-                  disabled={checkoutSubmitting}
-                >
-                  {checkoutSubmitting
-                    ? 'Submitting...'
-                    : USE_WHATSAPP_CHECKOUT
-                      ? 'Open WhatsApp'
-                      : 'Submit Order'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CheckoutModal
+        isOpen={checkoutOpen}
+        checkoutForm={checkoutForm}
+        paymentOptions={PAYMENT_OPTIONS}
+        useWhatsappCheckout={USE_WHATSAPP_CHECKOUT}
+        checkoutError={checkoutError}
+        checkoutSuccess={checkoutSuccess}
+        checkoutSubmitting={checkoutSubmitting}
+        cartItemCount={cartItemCount}
+        cartTotal={cartTotal}
+        hasUnpricedItems={hasUnpricedItems}
+        formatPrice={formatPrice}
+        onUpdateField={updateCheckoutField}
+        onClose={closeCheckout}
+        onSubmit={handleManualCheckout}
+      />
 
       <div className={`page-shell ${!ageVerified ? 'is-locked' : ''}`}>
-        <header className="content-section site-header">
-          <a className="brand" href="/">
-            <img
-              src="/content/assets/logo-1.png"
-              alt="Ijinja logo"
-              className="brand-logo"
-              loading="eager"
-              decoding="async"
-            />
-            <span className="brand-text">Ij!nja</span>
-          </a>
-
-          <div className="header-actions">
-            {headerCartVisible && (
-              <a
-                className={`header-cart-link ${headerCartExiting ? 'is-exiting' : ''}`}
-                href="#cart"
-                aria-label={`View cart. ${cartItemCount} item${cartItemCount === 1 ? '' : 's'} in cart.`}
-              >
-                <img
-                  src="/content/assets/shopping-bag-checkmark-icon.webp"
-                  alt=""
-                  className="header-cart-icon"
-                  loading="eager"
-                  decoding="async"
-                />
-                <span key={cartItemCount} className="header-cart-count">
-                  {cartItemCount}
-                </span>
-              </a>
-            )}
-
-            <a className="shop-cta" href="#store">
-              Shop now
-            </a>
-
-            <div className="menu-wrap" ref={menuWrapRef}>
-              <button
-                type="button"
-                className={`hamburger ${menuOpen ? 'is-open' : ''}`}
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                aria-expanded={menuOpen}
-              >
-                <span></span>
-                <span></span>
-                <span></span>
-              </button>
-
-              {menuOpen && (
-                <nav className="menu-dropdown" aria-label="Main navigation">
-                  {menuItems.map((item) => (
-                    <a
-                      key={item.label}
-                      href={item.href}
-                      className="menu-item"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                </nav>
-              )}
-            </div>
-          </div>
-        </header>
+        <Header
+          menuItems={menuItems}
+          headerCartVisible={headerCartVisible}
+          headerCartExiting={headerCartExiting}
+          cartItemCount={cartItemCount}
+        />
 
         <main className="home-content">
           <section className="content-section hero-section">
@@ -1145,215 +773,26 @@ function App() {
             </p>
           </section>
 
-          <section
-            className="content-section merch-section"
-            id="store"
-            aria-label="Merch store"
-          >
-            <div className="merch-head">
-              <p className="section-kicker">Merch Store</p>
-              <h2 className="section-title">Gear Up with Ijinja</h2>
-              <p>
-                {USE_WHATSAPP_CHECKOUT
-                  ? 'Add items to your cart and submit your order. WhatsApp will open with your order message ready to send to our team.'
-                  : 'Add items to your cart and submit your order. Our team will confirm stock, delivery, and payment with you personally.'}
-              </p>
-            </div>
-
-            <div className="merch-layout">
-              <div className="merch-grid">
-                {merchProducts.map((product) => {
-                  const merchImages = getMerchImages(product)
-                  const imageCount = merchImages.length
-                  const imageIndex =
-                    imageCount > 0 ? (activeMerchImage[product.id] ?? 0) % imageCount : 0
-                  const activeImage = merchImages[imageIndex] || product.image
-                  const isInStock = isProductInStock(product)
-
-                  const merchCardClassName = `merch-card${product.id === 'ijinja-tee' ? ' merch-card-tee' : ''}${product.id === 'ijinja-cap' ? ' merch-card-cap' : ''}`
-
-                  return (
-                  <article
-                    key={product.id}
-                    className={merchCardClassName}
-                  >
-                    <div className="merch-image-wrap">
-                      <img
-                        src={activeImage}
-                        alt={product.name}
-                        loading="lazy"
-                        onError={(event) => {
-                          event.currentTarget.style.display = 'none'
-                        }}
-                      />
-
-                      {imageCount > 1 && (
-                        <div className="merch-image-controls">
-                          <button
-                            type="button"
-                            className="merch-image-arrow"
-                            onClick={() => cycleMerchImage(product.id, imageCount, 1)}
-                            aria-label={`Show other side of ${product.name}`}
-                          >
-                            &gt;
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="merch-details">
-                      <p className="product-tag">{product.tag}</p>
-                      <p
-                        className={`stock-status ${
-                          isInStock ? 'stock-status-in' : 'stock-status-out'
-                        }`}
-                      >
-                        {isInStock ? 'In Stock' : 'Out of Stock'}
-                      </p>
-                      <h3>{product.name}</h3>
-                      <p>{product.description}</p>
-                      <p className="merch-price">{formatPrice(product.price)}</p>
-
-                      <label className="merch-option-row">
-                        <span>Size / Option</span>
-                        <select
-                          value={selectedMerchOptions[product.id]}
-                          onChange={(event) =>
-                            updateSelectedOption(product.id, event.target.value)
-                          }
-                          disabled={!isInStock}
-                        >
-                          {product.options.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <button
-                        type="button"
-                        className="merch-add-button"
-                        onClick={() => addToCart(product.id)}
-                        disabled={!isInStock}
-                      >
-                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
-                      </button>
-                    </div>
-                  </article>
-                  )
-                })}
-              </div>
-
-              <aside className="cart-panel" id="cart" aria-label="Shopping cart">
-                <div className="cart-head">
-                  <h3>Your Cart</h3>
-                  <p>
-                    {cartItemCount} item{cartItemCount === 1 ? '' : 's'}
-                  </p>
-                </div>
-
-                {!cartLineItems.length && (
-                  <p className="cart-empty">
-                    Your cart is empty. Add products or merch items to begin your order.
-                  </p>
-                )}
-
-                {!!cartLineItems.length && (
-                  <ul className="cart-list">
-                    {cartLineItems.map((entry) => (
-                      <li
-                        key={`${entry.productId}-${entry.option}`}
-                        className="cart-list-item"
-                      >
-                        <div className="cart-item-main">
-                          <h4>{entry.product.name}</h4>
-                          <p>{entry.option}</p>
-                          <strong>
-                            {entry.lineTotal === null
-                              ? 'Price on request'
-                              : formatPrice(entry.lineTotal)}
-                          </strong>
-                        </div>
-
-                        <div className="cart-item-actions">
-                          <div className="quantity-controls">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateCartQuantity(
-                                  entry.productId,
-                                  entry.option,
-                                  entry.quantity - 1,
-                                )
-                              }
-                              aria-label={`Decrease ${entry.product.name} quantity`}
-                            >
-                              -
-                            </button>
-                            <span>{entry.quantity}</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateCartQuantity(
-                                  entry.productId,
-                                  entry.option,
-                                  entry.quantity + 1,
-                                )
-                              }
-                              aria-label={`Increase ${entry.product.name} quantity`}
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="remove-item"
-                            onClick={() =>
-                              removeFromCart(entry.productId, entry.option)
-                            }
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <div className="cart-footer">
-                  <p className="cart-total">
-                    <span>Total</span>
-                    <strong>
-                      {hasUnpricedItems
-                        ? `${formatPrice(cartTotal)} + quoted items`
-                        : formatPrice(cartTotal)}
-                    </strong>
-                  </p>
-
-                  <div className="cart-buttons">
-                    <button
-                      type="button"
-                      className="cart-button cart-button-secondary"
-                      onClick={clearCart}
-                      disabled={!cartLineItems.length}
-                    >
-                      Clear Cart
-                    </button>
-                    <button
-                      type="button"
-                      className="cart-button cart-button-primary"
-                      onClick={openCheckout}
-                      disabled={!cartLineItems.length}
-                    >
-                      Checkout
-                    </button>
-                  </div>
-                </div>
-              </aside>
-            </div>
-          </section>
+          <Store
+            useWhatsappCheckout={USE_WHATSAPP_CHECKOUT}
+            merchProducts={merchProducts}
+            selectedMerchOptions={selectedMerchOptions}
+            activeMerchImage={activeMerchImage}
+            cartLineItems={cartLineItems}
+            cartItemCount={cartItemCount}
+            cartTotal={cartTotal}
+            hasUnpricedItems={hasUnpricedItems}
+            formatPrice={formatPrice}
+            isProductInStock={isProductInStock}
+            getMerchImages={getMerchImages}
+            updateSelectedOption={updateSelectedOption}
+            cycleMerchImage={cycleMerchImage}
+            addToCart={addToCart}
+            updateCartQuantity={updateCartQuantity}
+            removeFromCart={removeFromCart}
+            clearCart={clearCart}
+            openCheckout={openCheckout}
+          />
 
           <section className="content-section contact-section" id="contact">
             <div className="contact-copy">
