@@ -1465,6 +1465,16 @@
   color: #d9e2f2;
 }
 
+.site-footer a {
+  color: #ffbb98;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
 .age-gate-overlay {
   position: fixed;
   inset: 0;

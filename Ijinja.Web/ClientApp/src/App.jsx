@@ -108,6 +108,7 @@ const menuItems = [
   { label: 'Products', href: '#products' },
   { label: 'Buy Ijinja', href: '#buy-products' },
   { label: 'Store', href: '#store' },
+  { label: "T&C's", href: '/terms-and-conditions.html' },
   { label: 'Contact', href: '#contact' },
 ]
 
@@ -1367,6 +1368,9 @@ function App() {
 
         <footer className="content-section site-footer">
           <p>(c) 2026 Ij!nja. All Rights Reserved.</p>
+          <p>
+            <a href="/terms-and-conditions.html">Terms &amp; Conditions</a>
+          </p>
         </footer>
       </div>
     </>
