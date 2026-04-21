@@ -7,6 +7,7 @@ const MANUAL_ORDER_API_PATH = '/api/store/manual-order'
 const USE_WHATSAPP_CHECKOUT = true
 const STORY_VIDEO_SRC = '/content/assets/fire-video.mp4'
 const HERO_PHOTO_SRC = '/content/assets/ijinja-can-on-head.webp'
+const DRINK_CASE_SIZE = 24
 
 const PAYMENT_OPTIONS = [
   'EFT / Bank Transfer',
@@ -32,7 +33,7 @@ const products = [
     description:
       'A balanced ginger profile with clean heat and smooth everyday drinkability.',
     price: 34.99,
-    options: ['Standard'],
+    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
   },
   {
     id: 'ijinja-alcohol-free',
@@ -44,7 +45,7 @@ const products = [
     description:
       'All the Ijinja flavor and fire, made for alcohol-free moments.',
     price: 34.99,
-    options: ['Standard'],
+    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
   },
   {
     id: 'ijinja-with-gin',
@@ -56,9 +57,11 @@ const products = [
     description:
       'A bold, premium blend where spicy ginger meets a crisp gin finish.',
     price: 34.99,
-    options: ['Standard'],
+    options: [`Case (${DRINK_CASE_SIZE} Cans)`],
   },
 ]
+
+const drinkProductIds = new Set(products.map((product) => product.id))
 
 const merchProducts = [
   {
@@ -355,6 +358,20 @@ function App() {
 
   const formatPrice = (value) => moneyFormatter.format(value)
   const isProductInStock = (product) => product.inStock !== false
+  const getProductById = (productId) =>
+    storeProducts.find((entry) => entry.id === productId)
+  const isDrinkProduct = (productOrId) => {
+    const productId =
+      typeof productOrId === 'string' ? productOrId : productOrId?.id
+    return Boolean(productId && drinkProductIds.has(productId))
+  }
+  const getUnitPrice = (product) => {
+    if (!product || typeof product.price !== 'number') {
+      return null
+    }
+
+    return isDrinkProduct(product) ? product.price * DRINK_CASE_SIZE : product.price
+  }
 
   const getMerchImages = (product) =>
     Array.isArray(product.images) && product.images.length > 0
@@ -384,7 +401,7 @@ function App() {
   }
 
   const addToCart = (productId) => {
-    const product = storeProducts.find((entry) => entry.id === productId)
+    const product = getProductById(productId)
     if (!product) {
       return
     }
@@ -442,17 +459,18 @@ function App() {
 
   const cartLineItems = cartItems
     .map((entry) => {
-      const product = storeProducts.find((item) => item.id === entry.productId)
+      const product = getProductById(entry.productId)
       if (!product) {
         return null
       }
 
-      const hasPrice = typeof product.price === 'number'
+      const unitPrice = getUnitPrice(product)
 
       return {
         ...entry,
         product,
-        lineTotal: hasPrice ? product.price * entry.quantity : null,
+        unitPrice,
+        lineTotal: unitPrice === null ? null : unitPrice * entry.quantity,
       }
     })
     .filter(Boolean)
@@ -573,7 +591,7 @@ function App() {
         productName: entry.product.name,
         option: entry.option,
         quantity: entry.quantity,
-        unitPrice: entry.product.price ?? 0,
+        unitPrice: entry.unitPrice ?? 0,
         lineTotal: entry.lineTotal ?? 0,
       })),
     }
@@ -1071,13 +1089,15 @@ function App() {
               <p className="section-kicker">Buy Products</p>
               <h2 className="section-title">Order Your Ijinja Range</h2>
               <p>
-                Ready to stock up? Choose a flavor below and add it to your cart.
+                Ready to stock up? Drinks are sold per case of {DRINK_CASE_SIZE}{' '}
+                cans.
               </p>
             </div>
 
             <div className="buy-products-grid">
               {products.map((product) => {
                 const isInStock = isProductInStock(product)
+                const casePrice = getUnitPrice(product)
 
                 return (
                   <article key={product.id} className="buy-product-card">
@@ -1097,7 +1117,12 @@ function App() {
                       <h3>{product.name}</h3>
                       <p>{product.description}</p>
                       <p className="buy-product-price">
-                        {formatPrice(product.price)} Vat included
+                        {casePrice === null
+                          ? 'Price on request'
+                          : `${formatPrice(casePrice)} per case (Vat included)`}
+                      </p>
+                      <p className="buy-product-minimum">
+                        {formatPrice(product.price)} per can x {DRINK_CASE_SIZE} cans
                       </p>
 
                       <button
@@ -1106,7 +1131,7 @@ function App() {
                         onClick={() => addToCart(product.id)}
                         disabled={!isInStock}
                       >
-                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
+                        {isInStock ? 'Add Case to Cart' : 'Out of Stock'}
                       </button>
                     </div>
                   </article>
